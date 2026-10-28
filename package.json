@@ -1,0 +1,21 @@
+{
+  "name": "account-ledger-api",
+  "version": "1.0.0",
+  "description": "Accounts and transactions REST API with atomic balance updates",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "db:setup": "node src/setupDb.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "pg": "^8.23.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

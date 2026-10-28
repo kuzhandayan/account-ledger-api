@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ledger
+    volumes:
+      - ledger-data:/var/lib/postgresql/data
+    # the API waits until the database is ready
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ledger"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  api:
+    build: .
+    init: true # stops cleanly on Ctrl + C / docker compose down
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgres://postgres:postgres@db:5432/ledger
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  ledger-data:
