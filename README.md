@@ -13,6 +13,7 @@ Built with **Node.js**, **Express** and **PostgreSQL**.
 More details:
 - [API.md](API.md) – all the APIs with examples
 - [ASSUMPTIONS.md](ASSUMPTIONS.md) – decisions I made where the brief was open
+- [TESTING.md](TESTING.md) – step-by-step commands to test every feature
 
 ---
 
@@ -87,6 +88,8 @@ With either option, the server runs at **http://localhost:4000**.
 
 To check it's working, open http://localhost:4000/health. You should see `{"status":"ok"}`.
 
+To test every feature step by step, follow [TESTING.md](TESTING.md).
+
 ---
 
 ## APIs
@@ -157,4 +160,3 @@ Each request flows like this: **route** (checks the input) → **service** (does
 **Database rules.** The database itself also checks the main rules: amount must be more than 0, balance can't go below 0, type must be credit or debit, and a `reference_id` can't repeat for the same account. So even a bug in the code can't save wrong data.
 
 **Exact money values.** Amounts are stored as exact decimals (like 10.50). This avoids small rounding errors like 0.1 + 0.2 = 0.30000000000000004.
-# account-ledger-api

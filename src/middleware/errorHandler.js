@@ -1,23 +1,20 @@
 const AppError = require('../utils/AppError');
 
-// Every error response has the same shape:
-// { "error": { "code": "...", "message": "...", "details": {...} } }
+// Every error is returned as { error: { code, message } }
 function errorHandler(err, req, res, next) {
-  // Our own expected errors (validation, not found, insufficient balance, ...)
   if (err instanceof AppError) {
     const body = { error: { code: err.code, message: err.message } };
     if (err.details) body.error.details = err.details;
     return res.status(err.statusCode).json(body);
   }
 
-  // Body is not valid JSON
   if (err.type === 'entity.parse.failed') {
     return res.status(400).json({
       error: { code: 'INVALID_JSON', message: 'Request body is not valid JSON' },
     });
   }
 
-  // Unique (account_id, reference_id) violated - backup for the duplicate check
+  // Backup for duplicate reference_id, caught by the DB unique constraint
   if (err.code === '23505' && err.constraint === 'unique_reference_per_account') {
     return res.status(409).json({
       error: {
@@ -27,7 +24,6 @@ function errorHandler(err, req, res, next) {
     });
   }
 
-  // Anything else is unexpected - log it, don't leak internals to the client
   console.error(err);
   return res.status(500).json({
     error: { code: 'INTERNAL_SERVER_ERROR', message: 'Something went wrong' },

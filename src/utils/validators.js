@@ -29,7 +29,6 @@ function validateAmount(amount) {
   if (amount > MAX_AMOUNT) {
     throw validationError(`amount cannot be more than ${MAX_AMOUNT}`, 'INVALID_AMOUNT');
   }
-  // at most 2 decimal places, e.g. 10, 10.5, 10.55 are fine but 10.555 is not
   if (!/^\d+(\.\d{1,2})?$/.test(String(amount))) {
     throw validationError('amount can have at most 2 decimal places', 'INVALID_AMOUNT');
   }
@@ -54,7 +53,6 @@ function validateDescription(description) {
   }
 }
 
-// POST /accounts
 function validateCreateAccount(body) {
   ensureObject(body);
   const { name } = body;
@@ -70,7 +68,6 @@ function validateCreateAccount(body) {
   return { name: name.trim() };
 }
 
-// POST /transactions
 function validateCreateTransaction(body) {
   ensureObject(body);
   const { account_id, type, amount, description, reference_id } = body;
@@ -96,7 +93,6 @@ function validateCreateTransaction(body) {
   };
 }
 
-// POST /transfers
 function validateCreateTransfer(body) {
   ensureObject(body);
   const { from_account_id, to_account_id, amount, description, reference_id } = body;
@@ -124,9 +120,7 @@ function validateCreateTransfer(body) {
   };
 }
 
-// GET /accounts/:id/transactions?type=credit&page=1&limit=10
-// type is optional (no type = both credit and debit).
-// page defaults to 1, limit defaults to 10, max limit is 100.
+// Defaults: page 1, limit 10 (max 100). No type = both credit and debit
 function validateHistoryQuery(query) {
   const { type } = query;
   const page = query.page === undefined ? '1' : query.page;

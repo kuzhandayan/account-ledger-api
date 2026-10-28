@@ -4,20 +4,14 @@ const { getBalance } = require('./accountService');
 
 const TRANSACTION_COLUMNS = 'id, account_id, type, amount, description, reference_id, created_at';
 
-/**
- * Adds one transaction to an account and updates the balance.
- * Must be called with a client that is already inside a DB transaction,
- * so the insert and the balance update are saved together or not at all.
- */
+// Must be called inside runInTransaction, so the balance and the insert are saved together
 async function applyTransaction(client, { accountId, type, amount, description, referenceId }) {
-  // 1. Lock the account row. Any other request for the same account waits here
-  //    until we commit, so two debits can't both spend the same balance.
+  // Lock the account row: parallel requests on this account wait their turn
   const account = await client.query('SELECT id FROM accounts WHERE id = $1 FOR UPDATE', [accountId]);
   if (account.rows.length === 0) {
     throw new AppError(404, 'ACCOUNT_NOT_FOUND', `Account ${accountId} not found`);
   }
 
-  // 2. Same reference_id already used on this account?
   const existing = await client.query(
     'SELECT id FROM transactions WHERE account_id = $1 AND reference_id = $2',
     [accountId, referenceId]
@@ -31,8 +25,7 @@ async function applyTransaction(client, { accountId, type, amount, description, 
     );
   }
 
-  // 3. Update the balance. For a debit, the WHERE clause only matches if the
-  //    balance is enough, so the balance can never go below 0.
+  // Only updates if the new balance stays >= 0, otherwise the debit is rejected
   const change = type === 'credit' ? amount : -amount;
   const updated = await client.query(
     `UPDATE accounts SET balance = balance + $2
@@ -44,7 +37,6 @@ async function applyTransaction(client, { accountId, type, amount, description, 
     throw new AppError(422, 'INSUFFICIENT_BALANCE', 'Account does not have enough balance for this debit');
   }
 
-  // 4. Save the transaction record.
   const inserted = await client.query(
     `INSERT INTO transactions (account_id, type, amount, description, reference_id)
      VALUES ($1, $2, $3, $4, $5)
@@ -59,14 +51,12 @@ async function createTransaction(data) {
   return runInTransaction((client) => applyTransaction(client, data));
 }
 
-// Transactions of one account, latest first, with pagination.
-// If type is given ('credit' or 'debit') only that type is returned, otherwise both.
 async function listTransactions(accountId, { type, page, limit }) {
-  await getBalance(accountId); // 404 if the account doesn't exist
+  await getBalance(accountId);
 
   const offset = (page - 1) * limit;
 
-  // "$2::text IS NULL" means: when no type is given, don't filter by type.
+  // No type given = return both credit and debit
   const filter = 'WHERE account_id = $1 AND ($2::text IS NULL OR type = $2)';
   const filterValues = [accountId, type ?? null];
 

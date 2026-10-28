@@ -2,17 +2,10 @@ const { runInTransaction } = require('../db');
 const AppError = require('../utils/AppError');
 const { applyTransaction } = require('./transactionService');
 
-/**
- * Moves money from one account to another.
- * Debit on the source and credit on the destination run inside ONE database
- * transaction. If anything fails (not enough balance, duplicate reference,
- * DB error...), both are rolled back, so a partial transfer is not possible.
- */
+// Debit and credit run in one DB transaction, so a transfer is never half done
 async function createTransfer({ fromAccountId, toAccountId, amount, description, referenceId }) {
   return runInTransaction(async (client) => {
-    // Lock both accounts in a fixed order (sorted by id). If two transfers
-    // A->B and B->A run at the same time, they lock in the same order and
-    // don't deadlock each other.
+    // Lock both accounts in id order so two opposite transfers can't deadlock
     const locked = await client.query(
       'SELECT id FROM accounts WHERE id = ANY($1::uuid[]) ORDER BY id FOR UPDATE',
       [[fromAccountId, toAccountId]]

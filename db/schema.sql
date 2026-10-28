@@ -1,7 +1,4 @@
--- Database schema for the accounts & transactions API.
--- Money is stored as NUMERIC(12,2) (exact decimal, no floating point errors).
-
-CREATE EXTENSION IF NOT EXISTS pgcrypto; -- gives us gen_random_uuid()
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE TABLE IF NOT EXISTS accounts (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -18,15 +15,14 @@ CREATE TABLE IF NOT EXISTS transactions (
     description   VARCHAR(255),
     reference_id  VARCHAR(100)  NOT NULL,
     created_at    TIMESTAMPTZ   NOT NULL DEFAULT clock_timestamp(),
-    -- the same reference_id cannot be used twice for the same account
     CONSTRAINT unique_reference_per_account UNIQUE (account_id, reference_id)
 );
 
--- for "list transactions of an account, latest first"
+-- Speeds up transaction history (latest first)
 CREATE INDEX IF NOT EXISTS idx_transactions_account_created
     ON transactions (account_id, created_at DESC);
 
--- Transactions are immutable: block UPDATE and DELETE at the database level too.
+-- Transactions can't be updated or deleted, even directly in the database
 CREATE OR REPLACE FUNCTION block_transaction_changes() RETURNS trigger AS $$
 BEGIN
     RAISE EXCEPTION 'Transactions cannot be updated or deleted';

@@ -1,15 +1,14 @@
 const { Pool, types } = require('pg');
 require('dotenv').config({ quiet: true });
 
-// Return NUMERIC columns (balance, amount) as JS numbers instead of strings.
+// Return money columns (NUMERIC) as numbers instead of strings
 types.setTypeParser(1700, (value) => parseFloat(value));
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-// Runs the given function inside one database transaction.
-// If anything throws, everything is rolled back - nothing is half saved.
+// Runs work in one DB transaction: commit if it succeeds, roll back if anything fails
 async function runInTransaction(work) {
   const client = await pool.connect();
   try {

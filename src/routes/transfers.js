@@ -4,7 +4,6 @@ const { validateCreateTransfer } = require('../utils/validators');
 
 const router = express.Router();
 
-// Transfer money from one account to another (atomic)
 router.post('/', async (req, res) => {
   const data = validateCreateTransfer(req.body);
   const transfer = await transferService.createTransfer(data);

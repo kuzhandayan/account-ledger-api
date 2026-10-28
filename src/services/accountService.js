@@ -1,7 +1,6 @@
 const { pool } = require('../db');
 const AppError = require('../utils/AppError');
 
-// New accounts always start with balance 0 (set by the database default).
 async function createAccount(name) {
   const result = await pool.query(
     `INSERT INTO accounts (name)

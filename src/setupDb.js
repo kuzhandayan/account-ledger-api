@@ -1,5 +1,4 @@
-// Creates the tables by running db/schema.sql. Safe to run more than once.
-// Usage: npm run db:setup
+// Creates the tables from db/schema.sql (npm run db:setup)
 const fs = require('fs');
 const path = require('path');
 const { pool } = require('./db');
